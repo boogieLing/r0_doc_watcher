@@ -44,11 +44,11 @@ void argv_parse(int argc, char *argv[]) {
             system("pip3 install sphinx");
             system("pip3 install sphinx_book_theme");
             system("sphinx-quickstart");
-            system("mkdir ./watcher") ;
-            system("mv ./source ./watcher/");
-            system("mv ./Makefile ./watcher/");
-            system("mv ./make.bat ./watcher/");
-            system("mv ./build ./watcher/");
+            system("mkdir ./docs_build") ;
+            system("mv ./source ./docs_build/");
+            system("mv ./Makefile ./docs_build/");
+            system("mv ./make.bat ./docs_build/");
+            system("mv ./build ./docs_build/");
         } else if (0 == strcmp(argv[index], "-path")) {
             ++index ;
             g_ans_wd = argv[index] ;
@@ -63,7 +63,7 @@ void argv_parse(int argc, char *argv[]) {
                 // ::std::cout << it << '\n' ;
             }
         } else if (0 == strcmp(argv[index], "-clear")) {
-            system("sudo rm -rf ./watcher") ;
+            system("sudo rm -rf ./docs_build") ;
             // system("sudo rm -rf ./build") ;
             // system("sudo rm -rf ./source") ;
             // system("sudo rm -rf ./Makefile") ;
@@ -74,7 +74,14 @@ void argv_parse(int argc, char *argv[]) {
     }
 }
 
-
+bool is_ignore(const ::std::string &in_str) {
+    for (const auto &it:g_ignore_list) {
+        if (it==in_str) {
+            return true ;
+        }
+    }
+    return false ;
+}
 int main(int argc, char *argv[])
 {
     int fd;
@@ -108,7 +115,7 @@ int main(int argc, char *argv[])
     }
     if (ini_info == g_ans_ini) {
         fprintf(stdout, "%s\n", g_ans_wd);
-        ::std::ofstream source_index("./watcher/source/index.rst", ::std::ios::out| ::std::ios::app) ;
+        ::std::ofstream source_index("./docs_build/source/index.rst", ::std::ios::out| ::std::ios::app) ;
         DIR *d = opendir(g_ans_wd);
 
         if (NULL == d) {
@@ -118,7 +125,7 @@ int main(int argc, char *argv[])
         struct dirent *entry;
         while ((entry = readdir(d)) != NULL) {
             ::std::string file_name(entry->d_name);
-            if (file_name.find(".py") != std::string::npos) {
+            if (file_name.find(".py") != std::string::npos && !is_ignore(file_name)) {
                 file_name = file_name.substr(0, file_name.length() - 3);
                 fprintf(stdout, "%s --- add \n", entry->d_name);
                 source_index << '\n';
@@ -132,7 +139,7 @@ int main(int argc, char *argv[])
         }
         closedir(d);
         source_index.close();
-        ::std::ofstream source_config("./watcher/source/conf.py", ::std::ios::out| ::std::ios::app) ;
+        ::std::ofstream source_config("./docs_build/source/conf.py", ::std::ios::out| ::std::ios::app) ;
         source_config << '\n' ;
         source_config << "import os" << '\n' ;
         source_config << "extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.viewcode']" << '\n' ;
@@ -140,7 +147,7 @@ int main(int argc, char *argv[])
         source_config << "sys.path.insert(0, os.path.abspath('../../'))" << '\n' ;
         source_config << "html_theme = 'sphinx_book_theme'" << '\n' ;
         source_config.close();
-        system("sphinx-build -b html ./watcher/source  ./watcher/html_build") ;
+        system("sphinx-build -b html ./docs_build/source  ./docs_build/html_build") ;
         return -1 ;
     }
 
@@ -153,15 +160,18 @@ int main(int argc, char *argv[])
         buf[i] = 0;
     }
    
-    while ( 0 < (len = read(fd, buf, sizeof(buf) - 1)))  {
+    while (0 < (len = read(fd, buf, sizeof(buf) - 1)))  {
         nread = 0;
         while (0 < len) {
             event = (struct inotify_event *)&buf[nread];
+            if (is_ignore(::std::string(event->name))) {
+                continue ;
+            }
             for (int i=0 ; i<EVENT_NUM ; ++i) {
                 if((event->mask >> i) & 1) {
                     if(event->len > 0) {
                         if ("IN_MODIFY"==g_event_str[i]) {
-                            system("sphinx-build -b html ./watcher/source  ./watcher/html_build") ;
+                            system("sphinx-build -b html ./docs_build/source  ./docs_build/html_build") ;
                         }
                         fprintf(stdout, "\033[36m%s --- %s\n\033[0m", event->name, g_event_str[i].c_str());
                     } else {
