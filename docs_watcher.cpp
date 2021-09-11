@@ -24,6 +24,7 @@
     "IN_MOVE_SELF"
 };
 ::std::vector<::std::string> g_ignore_list{".", ".."};
+// ::std::vector<long long> g_ignore_bucket(INT_MAX/sizeof(int), 0);
 
 void usage() {
     fprintf(stderr, "----- \t\t ----------------------------------------------------------------------\n");
@@ -64,6 +65,8 @@ void argv_parse(int argc, char *argv[]) {
             }
         } else if (0 == strcmp(argv[index], "-clear")) {
             system("sudo rm -rf ./docs_build") ;
+            system("pip3 uninstall sphinx") ;
+            system("pip3 uninstall sphinx_book_theme") ;
             // system("sudo rm -rf ./build") ;
             // system("sudo rm -rf ./source") ;
             // system("sudo rm -rf ./Makefile") ;
@@ -130,7 +133,7 @@ int main(int argc, char *argv[])
                 fprintf(stdout, "%s --- add \n", entry->d_name);
                 source_index << '\n';
                 source_index << file_name << '\n';
-                source_index << "=======" << '\n';
+                source_index << "==================" << '\n';
                 source_index << ".. automodule:: ";
                 source_index << file_name << '\n';
                 source_index << "   :members:\n";
@@ -144,7 +147,7 @@ int main(int argc, char *argv[])
         source_config << "import os" << '\n' ;
         source_config << "extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.viewcode']" << '\n' ;
         source_config << "import sys" << '\n' ;
-        source_config << "sys.path.insert(0, os.path.abspath('../../'))" << '\n' ;
+        source_config << "sys.path.insert(0, os.path.abspath('../../" <<::std::string(g_ans_wd)<< "'))" << '\n' ;
         source_config << "html_theme = 'sphinx_book_theme'" << '\n' ;
         source_config.close();
         system("sphinx-build -b html ./docs_build/source  ./docs_build/html_build") ;
@@ -177,7 +180,6 @@ int main(int argc, char *argv[])
                     } else {
                         fprintf(stdout, "%s --- %s\n", " ", g_event_str[i].c_str());
                     }
-
                 }
                 // fprintf(stdout, "%d: %s --- %s\n", i, event->name, g_event_str[i].c_str());
             }

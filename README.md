@@ -1,6 +1,8 @@
 # DOCS Auto Generator
 
-
+[![For](https://img.shields.io/badge/for-doc-%2355efc4)]()
+[![Autor](https://img.shields.io/badge/Autor-r0-%23f0908d)]()
+[![rely on](https://img.shields.io/badge/env-Ubuntu-%230984e3)]()
 
 一个自动监控文件并生成文档的工具，利用Linux的inode通知链和能够通过注释生成文档的sphinx库实现。
 
